@@ -9,6 +9,8 @@ export interface IInvoice {
   amount: number;
   profit: number;
   address?: string;
+  isAddressPrinted: boolean;
+  addressPrintedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +24,8 @@ const InvoiceSchema = new Schema<IInvoice>(
     amount: { type: Number, required: true },
     profit: { type: Number, required: true, default: 0 },
     address: { type: String },
+    isAddressPrinted: { type: Boolean, default: false },
+    addressPrintedAt: { type: Date },
   },
   { timestamps: true }
 );
@@ -29,6 +33,7 @@ const InvoiceSchema = new Schema<IInvoice>(
 InvoiceSchema.index({ customer: 1 });
 InvoiceSchema.index({ reseller: 1 });
 InvoiceSchema.index({ ridaId: 1 });
+InvoiceSchema.index({ isAddressPrinted: 1 });
 InvoiceSchema.index({ createdAt: 1 });
 
 export const Invoice: Model<IInvoice> =

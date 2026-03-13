@@ -85,7 +85,7 @@ export default function InvoicesPage() {
         <span className="text-zinc-900">Invoices</span>
       </nav>
 
-      <div className="mb-4 flex items-center justify-between gap-4">
+      <div className="mb-4 space-y-3 sm:flex sm:items-center sm:justify-between sm:space-y-0">
         <h1 className="text-2xl font-bold text-zinc-900">Invoices</h1>
         <div className="flex shrink-0 items-center gap-2">
           <button
@@ -96,6 +96,19 @@ export default function InvoicesPage() {
             <FunnelIcon className="h-5 w-5" />
             Filters
           </button>
+          {/* Mobile: compact Print button */}
+          <Link
+            href="/invoices/print-address"
+            className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 sm:hidden"
+          >
+            Print
+          </Link>
+          <Link
+            href="/invoices/print-address"
+            className="hidden h-11 cursor-pointer items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 sm:flex"
+          >
+            Print Addresses
+          </Link>
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
@@ -265,6 +278,7 @@ export default function InvoicesPage() {
                     <th className="p-3 font-semibold text-zinc-900">Reseller</th>
                     <th className="p-3 font-semibold text-zinc-900">Amount</th>
                     <th className="p-3 font-semibold text-zinc-900">Profit</th>
+                    <th className="p-3 font-semibold text-zinc-900">Address Status</th>
                     <th className="p-3 font-semibold text-zinc-900">Actions</th>
                   </tr>
                 </thead>
@@ -284,6 +298,19 @@ export default function InvoicesPage() {
                       <td className="p-3 text-zinc-700">{inv.reseller}</td>
                       <td className="p-3 font-medium text-zinc-900">{formatMoney(inv.amount)}</td>
                       <td className="p-3 text-zinc-700">{formatMoney(inv.profit)}</td>
+                      <td className="p-3 text-zinc-700">
+                        {inv.isAddressPrinted ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                            Printed
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                            <span className="h-2 w-2 rounded-full bg-red-500" />
+                            Not printed
+                          </span>
+                        )}
+                      </td>
                       <td className="p-3">
                         <div className="flex gap-2">
                           <button
@@ -348,6 +375,10 @@ export default function InvoicesPage() {
                       </p>
                       <p className="mt-0.5 text-xs text-zinc-600">
                         Profit: {formatMoney(inv.profit)}
+                      </p>
+                      <p className="mt-0.5 text-xs text-zinc-600">
+                        Address:{" "}
+                        {inv.isAddressPrinted ? "Printed" : "Not printed"}
                       </p>
                     </div>
                     <div className="relative flex items-start">
@@ -511,6 +542,16 @@ export default function InvoicesPage() {
                     <dd className="mt-0.5 text-zinc-900 whitespace-pre-wrap">{viewing.address}</dd>
                   </div>
                 )}
+                <div>
+                  <dt className="font-medium text-zinc-500">Address print status</dt>
+                  <dd className="mt-0.5 text-zinc-900">
+                    {viewing.isAddressPrinted
+                      ? viewing.addressPrintedAt
+                        ? `Printed on ${new Date(viewing.addressPrintedAt).toLocaleString()}`
+                        : "Printed"
+                      : "Not printed yet"}
+                  </dd>
+                </div>
               </dl>
             </div>
             <div className="shrink-0 border-t border-zinc-200 px-4 py-4 sm:px-6">

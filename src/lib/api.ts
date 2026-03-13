@@ -43,6 +43,7 @@ export type RidaPopulated = {
   ridaName: string;
   price: number;
   profit: number;
+  ridaImage?: string;
 };
 
 export type InvoiceItem = {
@@ -54,6 +55,8 @@ export type InvoiceItem = {
   amount: number;
   profit: number;
   address?: string;
+  isAddressPrinted?: boolean;
+  addressPrintedAt?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -63,11 +66,23 @@ export type InvoicesResponse = {
   pagination: { page: number; limit: number; total: number; totalPages: number };
 };
 
+export type AddressItem = {
+  id: string;
+  address: string;
+  isAddressPrinted?: boolean;
+  addressPrintedAt?: string | null;
+};
+
+export type AddressesResponse = {
+  addresses: AddressItem[];
+};
+
 export type RidaItem = {
   _id: string;
   ridaName: string;
   price: number;
   profit: number;
+  ridaImage?: string;
   createdAt: string;
   updatedAt: string;
 };

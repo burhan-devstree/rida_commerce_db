@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import { Rida } from "@/models/Rida";
 import { requireAuth } from "@/middleware/auth";
 import { createRidaSchema } from "@/lib/validators";
+import { uploadToImgBB } from "@/lib/imgbb";
 
 async function getHandler(
   req: NextRequest,
@@ -37,19 +38,38 @@ async function postHandler(
   _payload: { userId: string; email: string }
 ) {
   try {
-    const body = await req.json();
-    const parsed = createRidaSchema.safeParse(body);
+    // Accept multipart/form-data to support image upload
+    const formData = await req.formData();
+
+    const ridaName = (formData.get("ridaName") as string | null)?.trim() ?? "";
+    const price = parseFloat((formData.get("price") as string) ?? "NaN");
+    const profit = parseFloat((formData.get("profit") as string) ?? "NaN");
+    const imageFile = formData.get("image") as File | null;
+
+    // Validate text fields via Zod
+    const parsed = createRidaSchema.omit({ ridaImage: true }).safeParse({
+      ridaName,
+      price: isNaN(price) ? undefined : price,
+      profit: isNaN(profit) ? undefined : profit,
+    });
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Validation failed", details: parsed.error.flatten() },
         { status: 400 }
       );
     }
-    const { ridaName, price, profit } = parsed.data;
 
     await connectDB();
 
-    const existing = await Rida.findOne({ ridaName: { $regex: new RegExp(`^${ridaName.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") } });
+    // Duplicate name check (case-insensitive)
+    const existing = await Rida.findOne({
+      ridaName: {
+        $regex: new RegExp(
+          `^${ridaName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+          "i"
+        ),
+      },
+    });
     if (existing) {
       return NextResponse.json(
         { error: "Rida with this name already exists" },
@@ -57,10 +77,18 @@ async function postHandler(
       );
     }
 
+    // Upload image to ImgBB if provided
+    let ridaImage: string | undefined;
+    if (imageFile && imageFile.size > 0) {
+      const buffer = Buffer.from(await imageFile.arrayBuffer());
+      ridaImage = await uploadToImgBB(buffer, imageFile.name);
+    }
+
     const doc = await Rida.create({
-      ridaName: ridaName.trim(),
-      price,
-      profit,
+      ridaName: parsed.data.ridaName,
+      price: parsed.data.price,
+      profit: parsed.data.profit,
+      ...(ridaImage && { ridaImage }),
     });
 
     return NextResponse.json(doc.toObject(), { status: 201 });

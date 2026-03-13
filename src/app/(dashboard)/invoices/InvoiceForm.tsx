@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { api, type InvoiceItem, type RidaItem } from "@/lib/api";
 
@@ -49,10 +50,6 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
   const ridaId = watch("ridaId");
   const ridaDisplay = watch("ridaDisplay");
   const amount = watch("amount");
-  const customer = watch("customer");
-  const reseller = watch("reseller");
-  const profit = watch("profit");
-  const address = watch("address");
 
   useEffect(() => {
     api<RidaItem[]>("/api/ridas").then(setRidas).catch(() => setRidas([]));
@@ -101,8 +98,8 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
 
   const filteredRidas = ridaSearch.trim()
     ? ridas.filter((r) =>
-        r.ridaName.toLowerCase().includes(ridaSearch.trim().toLowerCase())
-      )
+      r.ridaName.toLowerCase().includes(ridaSearch.trim().toLowerCase())
+    )
     : ridas;
 
   function handleSelectRida(r: RidaItem) {
@@ -186,6 +183,8 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
           className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-6"
         >
           <div className="space-y-4">
+
+            {/* ── Rida selector ─────────────────────────────── */}
             <div className="relative">
               <label
                 htmlFor="invoice-rida"
@@ -193,6 +192,30 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
               >
                 Rida *
               </label>
+
+              {/* Selected Rida image preview (shown when something is selected & dropdown closed) */}
+              {selectedRida?.ridaImage && !ridaDropdownOpen && (
+                <div className="mb-2 flex items-center gap-3 rounded-lg border border-zinc-100 bg-zinc-50 p-2">
+                  <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-white">
+                    <Image
+                      src={selectedRida.ridaImage}
+                      alt={selectedRida.ridaName}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-zinc-900">
+                      {selectedRida.ridaName}
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                      ₹{selectedRida.price} · profit ₹{selectedRida.profit}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <input
                 id="invoice-rida"
                 type="text"
@@ -216,8 +239,8 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
                     const trimmed = ridaSearch.trim();
                     const match = trimmed
                       ? (ridas.find((r) =>
-                          r.ridaName.toLowerCase() === trimmed.toLowerCase()
-                        ) || null)
+                        r.ridaName.toLowerCase() === trimmed.toLowerCase()
+                      ) || null)
                       : null;
                     if (match) {
                       setValue("ridaId", match._id);
@@ -230,9 +253,11 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
                 placeholder="Search or select Rida"
                 autoComplete="off"
               />
+
+              {/* Dropdown list with image thumbnails */}
               {ridaDropdownOpen && (
                 <ul
-                  className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-md"
+                  className="absolute left-0 right-0 top-full z-10 mt-1 max-h-56 overflow-y-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-md"
                   role="listbox"
                   aria-activedescendant={
                     selectedRida ? `rida-option-${selectedRida._id}` : undefined
@@ -248,34 +273,59 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
                       return (
                         <li
                           key={r._id}
-                          id={
-                            isSelected ? `rida-option-${r._id}` : undefined
-                          }
+                          id={isSelected ? `rida-option-${r._id}` : undefined}
                           role="option"
                           aria-selected={isSelected}
-                          className={`cursor-pointer px-3 py-2 text-sm hover:bg-zinc-100 ${
-                            isSelected
-                              ? "bg-blue-100 font-medium text-blue-800 ring-1 ring-blue-300"
+                          className={`flex cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-zinc-50 ${isSelected
+                              ? "bg-blue-50 font-medium text-blue-800 ring-1 ring-blue-200"
                               : "text-zinc-900"
-                          }`}
+                            }`}
                           onMouseDown={(e) => {
                             e.preventDefault();
                             handleSelectRida(r);
                           }}
                         >
-                          {r.ridaName} — {r.price} / profit {r.profit}
+                          {/* Thumbnail in dropdown */}
+                          {r.ridaImage ? (
+                            <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-zinc-100">
+                              <Image
+                                src={r.ridaImage}
+                                alt={r.ridaName}
+                                fill
+                                className="object-cover"
+                                unoptimized
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-dashed border-zinc-300 bg-zinc-50 text-xs text-zinc-400">
+                              ?
+                            </div>
+                          )}
+
+                          {/* Name + price info */}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-medium leading-tight">
+                              {r.ridaName}
+                            </p>
+                            <p className={`text-xs leading-tight ${isSelected ? "text-blue-600" : "text-zinc-500"}`}>
+                              ₹{r.price} · profit ₹{r.profit}
+                            </p>
+                          </div>
                         </li>
                       );
                     })
                   )}
                 </ul>
               )}
+
               {errors.ridaId && (
                 <p className="mt-1 text-sm text-red-600" role="alert">
                   {errors.ridaId.message}
                 </p>
               )}
             </div>
+
+            {/* ── Other fields ───────────────────────────────── */}
             <div>
               <label
                 htmlFor="invoice-customer"

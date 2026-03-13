@@ -40,6 +40,7 @@ export const createRidaSchema = z.object({
   ridaName: z.string().min(1, "Rida name is required"),
   price: z.number().min(0),
   profit: z.number(),
+  ridaImage: z.string().url().optional(),
 });
 export const updateRidaSchema = createRidaSchema.partial();
 
