@@ -12,6 +12,7 @@ async function getHandler(
   _payload: { userId: string; email: string }
 ) {
   try {
+    await connectDB();
     const { searchParams } = new URL(req.url);
     const query = Object.fromEntries(searchParams);
     const parsed = queryInvoicesSchema.safeParse(query);

@@ -26,6 +26,8 @@ export default function PrintAddressesPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [lastPdfInvoiceIds, setLastPdfInvoiceIds] = useState<string[]>([]);
 
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+
   useEffect(() => {
     return () => {
       if (pdfUrl) {
@@ -54,6 +56,55 @@ export default function PrintAddressesPage() {
     [visibleAddresses],
   );
 
+  useEffect(() => {
+    if (addresses.length === 0) {
+      setPdfUrl(null);
+      setLastPdfInvoiceIds([]);
+      return;
+    }
+
+    let active = true;
+    const candidates = showOnlyNotPrinted
+      ? addresses.filter((a) => !a.isAddressPrinted)
+      : addresses;
+
+    if (candidates.length === 0) {
+      setPdfUrl(null);
+      setLastPdfInvoiceIds([]);
+      return;
+    }
+
+    async function updatePdf() {
+      setPdfGenerating(true);
+      try {
+        const blob = await generateAddressPdf(
+          candidates.map((c) => c.address),
+          {
+            startDate: fromDate || undefined,
+            endDate: toDate || undefined,
+          },
+        );
+        if (!active) return;
+        const url = URL.createObjectURL(blob);
+        setPdfUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return url;
+        });
+        setLastPdfInvoiceIds(candidates.map((c) => c.id));
+      } catch (err) {
+        console.error("PDF generation failed:", err);
+      } finally {
+        if (active) setPdfGenerating(false);
+      }
+    }
+
+    void updatePdf();
+
+    return () => {
+      active = false;
+    };
+  }, [addresses, showOnlyNotPrinted, fromDate, toDate]);
+
   async function handleGeneratePreview() {
     setError(null);
 
@@ -77,36 +128,12 @@ export default function PrintAddressesPage() {
       );
       setAddresses(items);
 
-      const candidates = showOnlyNotPrinted
-        ? items.filter((a) => !a.isAddressPrinted)
-        : items;
-
-      if (candidates.length === 0) {
-        if (pdfUrl) {
-          URL.revokeObjectURL(pdfUrl);
-          setPdfUrl(null);
-        }
+      if (items.length === 0) {
         setError("No addresses found for the selected range.");
-        return;
       }
-
-      const blob = await generateAddressPdf(
-        candidates.map((c) => c.address),
-        {
-          startDate: fromDate || undefined,
-          endDate: toDate || undefined,
-        },
-      );
-
-      setLastPdfInvoiceIds(candidates.map((c) => c.id));
-
-      if (pdfUrl) {
-        URL.revokeObjectURL(pdfUrl);
-      }
-      const url = URL.createObjectURL(blob);
-      setPdfUrl(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
+      setAddresses([]);
     } finally {
       setLoading(false);
     }
@@ -306,10 +333,17 @@ export default function PrintAddressesPage() {
             />
           </div>
         ) : (
-          <div className="flex h-[240px] items-center justify-center text-sm text-zinc-500">
-            {loading
-              ? "Generating preview…"
-              : "No preview yet. Choose dates and click “Generate Preview”."}
+          <div className="flex h-[240px] flex-col items-center justify-center text-center text-sm text-zinc-500 px-4">
+            {loading || pdfGenerating ? (
+              <p>Generating preview…</p>
+            ) : addresses.length > 0 && showOnlyNotPrinted && addresses.every(a => a.isAddressPrinted) ? (
+              <p className="text-amber-700 font-medium">
+                All addresses in this range have already been printed.<br />
+                Uncheck &ldquo;Show only not printed addresses in PDF&rdquo; to view them.
+              </p>
+            ) : (
+              <p>No preview yet. Choose dates and click &ldquo;Generate Preview&rdquo;.</p>
+            )}
           </div>
         )}
       </section>

@@ -73,6 +73,9 @@ export default function InvoicesPage() {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
+    onError: (err) => {
+      alert(err instanceof Error ? err.message : "Failed to delete invoice");
+    },
   });
 
   return (
@@ -182,6 +185,13 @@ export default function InvoicesPage() {
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-zinc-700">Rida</label>
                 <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Search Rida…"
+                    value={ridaFilterSearch}
+                    onChange={(e) => setRidaFilterSearch(e.target.value)}
+                    className={inputStyle}
+                  />
                   <select
                     value={ridaId}
                     onChange={(e) => {

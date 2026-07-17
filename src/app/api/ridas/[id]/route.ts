@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import { Rida } from "@/models/Rida";
+import { Invoice } from "@/models/Invoice";
 import { requireAuth } from "@/middleware/auth";
 import { uploadToImgBB } from "@/lib/imgbb";
 
@@ -112,6 +113,13 @@ async function deleteHandler(
       return NextResponse.json({ error: "Invalid Rida ID" }, { status: 400 });
     }
     await connectDB();
+    const isReferenced = await Invoice.exists({ ridaId: id });
+    if (isReferenced) {
+      return NextResponse.json(
+        { error: "Rida is in use by one or more invoices and cannot be deleted." },
+        { status: 400 }
+      );
+    }
     const deleted = await Rida.findByIdAndDelete(id);
     if (!deleted) {
       return NextResponse.json({ error: "Rida not found" }, { status: 404 });

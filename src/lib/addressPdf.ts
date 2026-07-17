@@ -118,21 +118,28 @@ function wrapText(
   fontSize: number,
   maxWidth: number,
 ): string[] {
-  const words = text.split(/\s+/);
+  const rawLines = text.split(/\r?\n/);
   const lines: string[] = [];
-  let current = "";
 
-  for (const word of words) {
-    const next = current ? current + " " + word : word;
-    const width = font.widthOfTextAtSize(next, fontSize);
-    if (width <= maxWidth) {
-      current = next;
-    } else {
-      if (current) lines.push(current);
-      current = word;
+  for (const rawLine of rawLines) {
+    const words = rawLine.split(/\s+/).filter(Boolean);
+    let current = "";
+
+    for (const word of words) {
+      const next = current ? current + " " + word : word;
+      const width = font.widthOfTextAtSize(next, fontSize);
+      if (width <= maxWidth) {
+        current = next;
+      } else {
+        if (current) lines.push(current);
+        current = word;
+      }
+    }
+    if (current) lines.push(current);
+    if (words.length === 0) {
+      lines.push("");
     }
   }
-  if (current) lines.push(current);
   return lines;
 }
 

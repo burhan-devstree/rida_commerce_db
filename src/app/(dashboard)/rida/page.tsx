@@ -324,6 +324,9 @@ export default function RidaPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ridas"] });
     },
+    onError: (err) => {
+      alert(err instanceof Error ? err.message : "Failed to delete Rida");
+    },
   });
 
   return (

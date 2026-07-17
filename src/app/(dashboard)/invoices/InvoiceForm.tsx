@@ -246,6 +246,15 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
                       setValue("ridaId", match._id);
                       setValue("ridaDisplay", match.ridaName);
                       clearErrors("ridaId");
+                    } else {
+                      if (selectedRida) {
+                        setRidaSearch("");
+                        setValue("ridaDisplay", selectedRida.ridaName);
+                      } else {
+                        setRidaSearch("");
+                        setValue("ridaId", "");
+                        setValue("ridaDisplay", "");
+                      }
                     }
                   }, 200);
                 }}

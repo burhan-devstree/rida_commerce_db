@@ -5,23 +5,6 @@ import { requireAuth } from "@/middleware/auth";
 import { sumNumbers } from "@/utils/calc";
 import { dashboardSummaryQuerySchema } from "@/lib/validators";
 
-function getStartOfWeek(d: Date): Date {
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d);
-  monday.setDate(diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday;
-}
-
-function getEndOfWeek(d: Date): Date {
-  const start = getStartOfWeek(d);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 6);
-  end.setHours(23, 59, 59, 999);
-  return end;
-}
-
 async function getHandler(
   req: NextRequest,
   _context: { params?: Promise<Record<string, string>> },
