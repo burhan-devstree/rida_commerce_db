@@ -23,6 +23,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsReady(true);
   }, []);
 
+  useEffect(() => {
+    function handleAuthLogout() {
+      setToken(null);
+    }
+    window.addEventListener("auth-logout", handleAuthLogout);
+    return () => {
+      window.removeEventListener("auth-logout", handleAuthLogout);
+    };
+  }, []);
+
   const login = useCallback(async (email: string, password: string) => {
     const res = await fetch("/api/auth/login", {
       method: "POST",

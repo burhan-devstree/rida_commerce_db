@@ -161,6 +161,12 @@ function RidaForm({ rida, onClose, onSuccess }: RidaFormProps) {
 
       const res = await fetch(url, { method, headers, body: fd });
       const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+          window.dispatchEvent(new Event("auth-logout"));
+        }
+      }
       if (!res.ok) {
         throw new Error(data.message || data.error || "Request failed");
       }

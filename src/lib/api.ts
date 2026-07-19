@@ -26,6 +26,12 @@ export async function api<T>(
       : undefined;
   const res = await fetch(`${API_BASE}${path}`, { ...rest, headers, body: fetchBody });
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      window.dispatchEvent(new Event("auth-logout"));
+    }
+  }
   if (!res.ok) {
     throw new Error(data.message || data.error || "Request failed");
   }
