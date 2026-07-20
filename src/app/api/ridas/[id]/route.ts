@@ -4,7 +4,7 @@ import { connectDB } from "@/lib/db";
 import { Rida } from "@/models/Rida";
 import { Invoice } from "@/models/Invoice";
 import { requireAuth } from "@/middleware/auth";
-import { uploadToImgBB } from "@/lib/imgbb";
+import { put, del } from "@vercel/blob";
 
 async function getHandler(
   _req: NextRequest,
@@ -74,16 +74,35 @@ async function putHandler(
     }
 
     // Image update logic:
-    // 1. New file provided → upload to ImgBB → save new URL
+    // 1. New file provided → upload to Vercel Blob → save new URL
     // 2. No file + ridaImage = "" → clear the image (user removed it)
     // 3. No file + ridaImage = existing URL → keep unchanged (no-op)
     // 4. No file + ridaImage not sent → leave current value unchanged
     if (imageFile && imageFile.size > 0) {
       const buffer = Buffer.from(await imageFile.arrayBuffer());
-      rida.ridaImage = await uploadToImgBB(buffer, imageFile.name);
+      if (rida.ridaImage && rida.ridaImage.includes("public.blob.vercel-storage.com")) {
+        try {
+          await del(rida.ridaImage, { token: process.env.BLOB_READ_WRITE_TOKEN });
+        } catch (err) {
+          console.error("Failed to delete old blob:", err);
+        }
+      }
+      const blobFilename = `rida/${Date.now()}_${imageFile.name}`;
+      const blob = await put(blobFilename, buffer, {
+        access: "public",
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      });
+      rida.ridaImage = blob.url;
     } else if (ridaImageField !== null) {
       // ridaImageField was explicitly sent
       if (ridaImageField === "") {
+        if (rida.ridaImage && rida.ridaImage.includes("public.blob.vercel-storage.com")) {
+          try {
+            await del(rida.ridaImage, { token: process.env.BLOB_READ_WRITE_TOKEN });
+          } catch (err) {
+            console.error("Failed to delete old blob:", err);
+          }
+        }
         // User clicked "Remove image"
         rida.ridaImage = undefined;
       }
@@ -123,6 +142,13 @@ async function deleteHandler(
     const deleted = await Rida.findByIdAndDelete(id);
     if (!deleted) {
       return NextResponse.json({ error: "Rida not found" }, { status: 404 });
+    }
+    if (deleted.ridaImage && deleted.ridaImage.includes("public.blob.vercel-storage.com")) {
+      try {
+        await del(deleted.ridaImage, { token: process.env.BLOB_READ_WRITE_TOKEN });
+      } catch (err) {
+        console.error("Failed to delete blob of deleted Rida:", err);
+      }
     }
     return NextResponse.json({ success: true });
   } catch (err) {

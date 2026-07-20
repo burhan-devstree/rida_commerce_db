@@ -3,7 +3,7 @@ import { connectDB } from "@/lib/db";
 import { Rida } from "@/models/Rida";
 import { requireAuth } from "@/middleware/auth";
 import { createRidaSchema } from "@/lib/validators";
-import { uploadToImgBB } from "@/lib/imgbb";
+import { put } from "@vercel/blob";
 
 async function getHandler(
   req: NextRequest,
@@ -13,12 +13,34 @@ async function getHandler(
   try {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim();
+    const pageParam = searchParams.get("page");
 
     await connectDB();
 
     const filter: Record<string, unknown> = {};
     if (search) {
       filter.ridaName = new RegExp(search, "i");
+    }
+
+    if (pageParam) {
+      const page = Math.max(1, parseInt(pageParam) || 1);
+      const limit = Math.max(1, parseInt(searchParams.get("limit") || "10"));
+      const skip = (page - 1) * limit;
+
+      const [ridas, total] = await Promise.all([
+        Rida.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+        Rida.countDocuments(filter),
+      ]);
+
+      return NextResponse.json({
+        ridas,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      });
     }
 
     const list = await Rida.find(filter).sort({ ridaName: 1 }).lean();
@@ -77,11 +99,16 @@ async function postHandler(
       );
     }
 
-    // Upload image to ImgBB if provided
+    // Upload image to Vercel Blob if provided
     let ridaImage: string | undefined;
     if (imageFile && imageFile.size > 0) {
       const buffer = Buffer.from(await imageFile.arrayBuffer());
-      ridaImage = await uploadToImgBB(buffer, imageFile.name);
+      const blobFilename = `rida/${Date.now()}_${imageFile.name}`;
+      const blob = await put(blobFilename, buffer, {
+        access: "public",
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      });
+      ridaImage = blob.url;
     }
 
     const doc = await Rida.create({

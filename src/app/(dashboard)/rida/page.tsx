@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type RidaItem } from "@/lib/api";
 import { PencilIcon, TrashIcon } from "@/components/icons";
+import { Pagination } from "@/components/Pagination";
 
 function formatMoney(n: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -388,14 +389,26 @@ export default function RidaPage() {
   const [editing, setEditing] = useState<RidaItem | null>(null);
   const [previewRida, setPreviewRida] = useState<RidaItem | null>(null);
 
-  const { data: list, isLoading, error } = useQuery<RidaItem[]>({
-    queryKey: ["ridas"],
-    queryFn: () => api("/api/ridas"),
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [search, setSearch] = useState("");
+
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  if (search.trim()) {
+    params.set("search", search.trim());
+  }
+
+  const { data, isLoading, error } = useQuery<{ ridas: RidaItem[]; pagination: any }>({
+    queryKey: ["ridas-paginated", page, limit, search],
+    queryFn: () => api(`/api/ridas?${params}`),
   });
 
   const deleteRida = useMutation({
     mutationFn: (id: string) => api(`/api/ridas/${id}`, { method: "DELETE" }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ridas-paginated"] });
       queryClient.invalidateQueries({ queryKey: ["ridas"] });
     },
     onError: (err) => {
@@ -425,6 +438,21 @@ export default function RidaPage() {
         </button>
       </div>
 
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full max-w-xs">
+          <input
+            type="text"
+            placeholder="Search by Rida name…"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-3 pr-10 text-sm font-medium text-zinc-900 placeholder-zinc-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          />
+        </div>
+      </div>
+
       <div className="rounded-xl border border-zinc-200 bg-white shadow-sm">
         {isLoading && <div className="p-8 text-center text-zinc-500">Loading…</div>}
         {error && (
@@ -432,106 +460,119 @@ export default function RidaPage() {
             {error instanceof Error ? error.message : "Failed to load Ridas"}
           </div>
         )}
-        {list && (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 bg-sky-100">
-                  <th className="p-3 font-semibold text-zinc-900">Image</th>
-                  <th className="p-3 font-semibold text-zinc-900">Rida name</th>
-                  <th className="p-3 font-semibold text-zinc-900">Price</th>
-                  <th className="p-3 font-semibold text-zinc-900">Profit</th>
-                  <th className="p-3 font-semibold text-zinc-900">Cost</th>
-                  <th className="p-3 font-semibold text-zinc-900">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {list.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-zinc-600">
-                      No Ridas yet. Add one to get started.
-                    </td>
+        {data && (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[620px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-200 bg-sky-100">
+                    <th className="p-3 font-semibold text-zinc-900">Image</th>
+                    <th className="p-3 font-semibold text-zinc-900">Rida name</th>
+                    <th className="p-3 font-semibold text-zinc-900">Price</th>
+                    <th className="p-3 font-semibold text-zinc-900">Profit</th>
+                    <th className="p-3 font-semibold text-zinc-900">Cost</th>
+                    <th className="p-3 font-semibold text-zinc-900">Actions</th>
                   </tr>
-                ) : (
-                  list.map((r) => (
-                    <tr key={r._id} className="border-b border-zinc-100 hover:bg-zinc-50/50">
-                      {/* Thumbnail + Preview button */}
-                      <td className="p-3">
-                        {r.ridaImage ? (
-                          <button
-                            type="button"
-                            title="Preview image"
-                            aria-label={`Preview image for ${r.ridaName}`}
-                            onClick={() => setPreviewRida(r)}
-                            className="group relative block h-10 w-10 overflow-hidden rounded-md border border-zinc-200 bg-zinc-50 transition-all hover:ring-2 hover:ring-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            <Image
-                              src={r.ridaImage}
-                              alt={r.ridaName}
-                              fill
-                              className="object-cover transition-opacity group-hover:opacity-75"
-                              unoptimized
-                            />
-                            {/* Hover overlay with eye icon */}
-                            <span className="absolute inset-0 flex items-center justify-center bg-blue-600/0 transition-all group-hover:bg-blue-600/30">
-                              <EyeIcon className="h-4 w-4 text-white opacity-0 drop-shadow-md transition-opacity group-hover:opacity-100" />
-                            </span>
-                          </button>
-                        ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-dashed border-zinc-300 bg-zinc-50 text-xs text-zinc-400">
-                            —
-                          </div>
-                        )}
-                      </td>
-                      <td className="p-3 font-medium text-zinc-900">{r.ridaName}</td>
-                      <td className="p-3 text-zinc-700">{formatMoney(r.price)}</td>
-                      <td className="p-3 text-zinc-700">{formatMoney(r.profit)}</td>
-                      <td className="p-3 text-zinc-600">{formatMoney(r.price - r.profit)}</td>
-                      <td className="p-3">
-                        <div className="flex gap-2">
-                          {/* Preview button (pill — visible even without image, disabled if no image) */}
-                          {r.ridaImage && (
-                            <button
-                              type="button"
-                              onClick={() => setPreviewRida(r)}
-                              title="Preview"
-                              className="flex h-10 items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-                              aria-label="Preview"
-                            >
-                              <EyeIcon className="h-4 w-4" />
-                              Preview
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => setEditing(r)}
-                            title="Edit"
-                            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100"
-                            aria-label="Edit Rida"
-                          >
-                            <PencilIcon className="h-5 w-5" />
-                          </button>
-                          <button
-                            type="button"
-                            title="Delete"
-                            onClick={() => {
-                              if (confirm("Delete this Rida? Invoices using it will keep the stored name.")) {
-                                deleteRida.mutate(r._id);
-                              }
-                            }}
-                            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg text-red-600 hover:bg-red-50"
-                            aria-label="Delete Rida"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        </div>
+                </thead>
+                <tbody>
+                  {data.ridas.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-zinc-600">
+                        No Ridas yet. Add one to get started.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : (
+                    data.ridas.map((r) => (
+                      <tr key={r._id} className="border-b border-zinc-100 hover:bg-zinc-50/50">
+                        {/* Thumbnail + Preview button */}
+                        <td className="p-3">
+                          {r.ridaImage ? (
+                            <button
+                              type="button"
+                              title="Preview image"
+                              aria-label={`Preview image for ${r.ridaName}`}
+                              onClick={() => setPreviewRida(r)}
+                              className="group relative block h-10 w-10 overflow-hidden rounded-md border border-zinc-200 bg-zinc-50 transition-all hover:ring-2 hover:ring-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <Image
+                                src={r.ridaImage}
+                                alt={r.ridaName}
+                                fill
+                                className="object-cover transition-opacity group-hover:opacity-75"
+                                unoptimized
+                              />
+                              {/* Hover overlay with eye icon */}
+                              <span className="absolute inset-0 flex items-center justify-center bg-blue-600/0 transition-all group-hover:bg-blue-600/30">
+                                <EyeIcon className="h-4 w-4 text-white opacity-0 drop-shadow-md transition-opacity group-hover:opacity-100" />
+                              </span>
+                            </button>
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-dashed border-zinc-300 bg-zinc-50 text-xs text-zinc-400">
+                              —
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-3 font-medium text-zinc-900">{r.ridaName}</td>
+                        <td className="p-3 text-zinc-700">{formatMoney(r.price)}</td>
+                        <td className="p-3 text-zinc-700">{formatMoney(r.profit)}</td>
+                        <td className="p-3 text-zinc-600">{formatMoney(r.price - r.profit)}</td>
+                        <td className="p-3">
+                          <div className="flex gap-2">
+                            {/* Preview button */}
+                            {r.ridaImage && (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewRida(r)}
+                                title="Preview"
+                                className="flex h-10 items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                                aria-label="Preview"
+                              >
+                                <EyeIcon className="h-4 w-4" />
+                                Preview
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setEditing(r)}
+                              title="Edit"
+                              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100"
+                              aria-label="Edit Rida"
+                            >
+                              <PencilIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                              type="button"
+                              title="Delete"
+                              onClick={() => {
+                                if (confirm("Delete this Rida? Invoices using it will keep the stored name.")) {
+                                  deleteRida.mutate(r._id);
+                                }
+                              }}
+                              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg text-red-600 hover:bg-red-50"
+                              aria-label="Delete Rida"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              page={page}
+              totalPages={data.pagination.totalPages}
+              total={data.pagination.total}
+              limit={limit}
+              onPageChange={setPage}
+              onLimitChange={(l) => {
+                setLimit(l);
+                setPage(1);
+              }}
+            />
+          </>
         )}
       </div>
 
@@ -549,6 +590,7 @@ export default function RidaPage() {
           onClose={() => setCreateOpen(false)}
           onSuccess={() => {
             setCreateOpen(false);
+            queryClient.invalidateQueries({ queryKey: ["ridas-paginated"] });
             queryClient.invalidateQueries({ queryKey: ["ridas"] });
           }}
         />
@@ -559,6 +601,7 @@ export default function RidaPage() {
           onClose={() => setEditing(null)}
           onSuccess={() => {
             setEditing(null);
+            queryClient.invalidateQueries({ queryKey: ["ridas-paginated"] });
             queryClient.invalidateQueries({ queryKey: ["ridas"] });
           }}
         />

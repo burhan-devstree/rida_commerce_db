@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { EyeIcon, FunnelIcon, MenuIcon, PencilIcon, TrashIcon } from "@/components/icons";
 import { InvoiceForm } from "./InvoiceForm";
+import { Pagination } from "@/components/Pagination";
 
 function formatMoney(n: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -27,7 +28,7 @@ const SEARCH_FIELD_OPTIONS: { value: "invoiceNumber" | "customer" | "reseller"; 
 export default function InvoicesPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit, setLimit] = useState(20);
   const [search, setSearch] = useState("");
   const [searchField, setSearchField] = useState<"invoiceNumber" | "customer" | "reseller">("invoiceNumber");
   const [dateFrom, setDateFrom] = useState("");
@@ -452,31 +453,17 @@ export default function InvoicesPage() {
               )))}
             </div>
 
-            {data.pagination.totalPages > 1 && (
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 px-3 py-3">
-                <span className="text-sm text-zinc-500">
-                  Page {data.pagination.page} of {data.pagination.totalPages} ({data.pagination.total} total)
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    disabled={data.pagination.page <= 1}
-                    onClick={() => setPage((p) => p - 1)}
-                    className="min-h-[44px] cursor-pointer rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    disabled={data.pagination.page >= data.pagination.totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                    className="min-h-[44px] cursor-pointer rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
+            <Pagination
+              page={page}
+              totalPages={data.pagination.totalPages}
+              total={data.pagination.total}
+              limit={limit}
+              onPageChange={setPage}
+              onLimitChange={(l) => {
+                setLimit(l);
+                setPage(1);
+              }}
+            />
           </>
         )}
       </div>
