@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Invoice } from "@/models/Invoice";
+import { Expense } from "@/models/Expense";
 import { requireAuth } from "@/middleware/auth";
 import { sumNumbers } from "@/utils/calc";
 import { dashboardSummaryQuerySchema } from "@/lib/validators";
@@ -29,15 +30,23 @@ async function getHandler(
       }
     }
 
-    const docs = await Invoice.find(filter).lean();
+    const [docs, expenseDocs] = await Promise.all([
+      Invoice.find(filter).lean(),
+      Expense.find(filter).lean(),
+    ]);
+
     const totalInvoices = docs.length;
     const totalRevenue = sumNumbers(docs.map((d) => d.amount));
     const totalProfit = sumNumbers(docs.map((d) => (d as { profit?: number }).profit ?? 0));
+    const totalExpenses = sumNumbers(expenseDocs.map((e) => e.amount));
+    const profitAfterExpenses = totalProfit - totalExpenses;
 
     return NextResponse.json({
       totalInvoices,
       totalRevenue,
       totalProfit,
+      totalExpenses,
+      profitAfterExpenses,
     });
   } catch (err) {
     console.error("GET /api/dashboard/summary:", err);

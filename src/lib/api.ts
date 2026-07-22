@@ -7,7 +7,7 @@ function getToken(): string | null {
 
 export async function api<T>(
   path: string,
-  options: RequestInit & { body?: Record<string, unknown> | string } = {}
+  options: Omit<RequestInit, "body"> & { body?: Record<string, unknown> | BodyInit | null } = {}
 ): Promise<T> {
   const token = getToken();
   const headers: HeadersInit = {
@@ -42,6 +42,21 @@ export type DashboardSummary = {
   totalInvoices: number;
   totalRevenue: number;
   totalProfit: number;
+  totalExpenses: number;
+  profitAfterExpenses: number;
+};
+
+export type ExpenseItem = {
+  _id: string;
+  expenseName: string;
+  amount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ExpensesResponse = {
+  expenses: ExpenseItem[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
 };
 
 export type RidaPopulated = {

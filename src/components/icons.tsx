@@ -94,3 +94,11 @@ export function CubeIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function BanknotesIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 11.985-4.787 1.125 1.125 0 0 1 1.035-.57 60.07 60.07 0 0 1 11.985 4.787 1.125 1.125 0 0 1 0 1.97 60.07 60.07 0 0 1-11.985 4.787 1.125 1.125 0 0 1-1.035-.57 60.07 60.07 0 0 1-11.985-4.787A1.125 1.125 0 0 1 2.25 18.75ZM12 12.75a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+    </svg>
+  );
+}

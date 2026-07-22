@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HomeIcon, DocumentIcon, CubeIcon } from "./icons";
+import { HomeIcon, DocumentIcon, CubeIcon, BanknotesIcon } from "./icons";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: HomeIcon },
   { href: "/invoices", label: "Invoices", icon: DocumentIcon },
   { href: "/rida", label: "Rida Module", icon: CubeIcon },
+  { href: "/expenses", label: "Expenses", icon: BanknotesIcon },
 ];
 
 type SidebarProps = {

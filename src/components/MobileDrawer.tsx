@@ -4,12 +4,13 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { HomeIcon, DocumentIcon, CubeIcon, ArrowRightOnRectangleIcon } from "./icons";
+import { HomeIcon, DocumentIcon, CubeIcon, BanknotesIcon, ArrowRightOnRectangleIcon } from "./icons";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: HomeIcon },
   { href: "/invoices", label: "Invoices", icon: DocumentIcon },
   { href: "/rida", label: "Rida Module", icon: CubeIcon },
+  { href: "/expenses", label: "Expenses", icon: BanknotesIcon },
 ];
 
 type MobileDrawerProps = {

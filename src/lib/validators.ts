@@ -44,6 +44,18 @@ export const createRidaSchema = z.object({
 });
 export const updateRidaSchema = createRidaSchema.partial();
 
+export const createExpenseSchema = z.object({
+  expenseName: z.string().min(1, "Expense name is required"),
+  amount: z.number().min(0, "Amount must be a positive number"),
+});
+export const updateExpenseSchema = createExpenseSchema.partial();
+
+export const queryExpensesSchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+  search: z.string().optional(),
+});
+
 export const dashboardSummaryQuerySchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
@@ -55,3 +67,6 @@ export type UpdateInvoiceInput = z.infer<typeof updateInvoiceSchema>;
 export type QueryInvoicesInput = z.infer<typeof queryInvoicesSchema>;
 export type CreateRidaInput = z.infer<typeof createRidaSchema>;
 export type UpdateRidaInput = z.infer<typeof updateRidaSchema>;
+export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
+export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
+export type QueryExpensesInput = z.infer<typeof queryExpensesSchema>;

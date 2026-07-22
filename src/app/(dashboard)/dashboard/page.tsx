@@ -93,6 +93,31 @@ const CARDS = [
     ),
   },
   {
+    label: "Total Expenses",
+    key: "totalExpenses" as const,
+    format: (d: DashboardSummary) => formatMoney(d.totalExpenses),
+    color: "bg-rose-500",
+    iconColor: "text-rose-500",
+    icon: (
+      <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 11.985-4.787 1.125 1.125 0 0 1 1.035-.57 60.07 60.07 0 0 1 11.985 4.787 1.125 1.125 0 0 1 0 1.97 60.07 60.07 0 0 1-11.985 4.787 1.125 1.125 0 0 1-1.035-.57 60.07 60.07 0 0 1-11.985-4.787A1.125 1.125 0 0 1 2.25 18.75ZM12 12.75a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+      </svg>
+    ),
+  },
+  {
+    label: "Profit After Expenses",
+    key: "profitAfterExpenses" as const,
+    format: (d: DashboardSummary) => formatMoney(d.profitAfterExpenses),
+    color: (d: DashboardSummary) => (d.profitAfterExpenses < 0 ? "bg-red-600" : "bg-indigo-500"),
+    valueColor: (d: DashboardSummary) => (d.profitAfterExpenses < 0 ? "text-red-600 font-bold" : "text-zinc-900 font-bold"),
+    iconColor: (d: DashboardSummary) => (d.profitAfterExpenses < 0 ? "text-red-500" : "text-indigo-500"),
+    icon: (
+      <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+      </svg>
+    ),
+  },
+  {
     label: "Total Invoices",
     key: "totalInvoices" as const,
     format: (d: DashboardSummary) => String(d.totalInvoices),
@@ -244,19 +269,24 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {CARDS.map(({ label, format, color, iconColor, icon }) => (
-          <div
-            key={label}
-            className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
-          >
-            <p className="text-sm font-medium text-zinc-500">{label}</p>
-            <p className="mt-2 text-2xl font-bold text-zinc-900">{format(data)}</p>
-            <div className={`mt-3 h-1 w-12 rounded ${color}`} />
-            <div className={`absolute right-4 top-4 opacity-20 ${iconColor}`}>
-              {icon}
+        {CARDS.map(({ label, format, color, valueColor, iconColor, icon }) => {
+          const barColor = typeof color === "function" ? color(data) : color;
+          const txtColor = typeof valueColor === "function" ? valueColor(data) : "text-zinc-900";
+          const iColor = typeof iconColor === "function" ? iconColor(data) : iconColor;
+          return (
+            <div
+              key={label}
+              className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
+            >
+              <p className="text-sm font-medium text-zinc-500">{label}</p>
+              <p className={`mt-2 text-2xl font-bold ${txtColor}`}>{format(data)}</p>
+              <div className={`mt-3 h-1 w-12 rounded ${barColor}`} />
+              <div className={`absolute right-4 top-4 opacity-20 ${iColor}`}>
+                {icon}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
