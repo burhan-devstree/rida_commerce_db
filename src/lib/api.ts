@@ -71,6 +71,7 @@ export type InvoiceItem = {
   _id: string;
   invoiceNumber: string;
   ridaId: string | RidaPopulated;
+  quantity?: number;
   customer: string;
   reseller: string;
   amount: number;

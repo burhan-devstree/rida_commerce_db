@@ -8,6 +8,7 @@ import { api, type InvoiceItem, type RidaItem } from "@/lib/api";
 type FormValues = {
   ridaId: string;
   ridaDisplay: string;
+  quantity: number;
   customer: string;
   reseller: string;
   amount: number;
@@ -39,6 +40,7 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
     defaultValues: {
       ridaId: "",
       ridaDisplay: "",
+      quantity: 1,
       customer: "",
       reseller: "",
       amount: 0,
@@ -49,6 +51,7 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
 
   const ridaId = watch("ridaId");
   const ridaDisplay = watch("ridaDisplay");
+  const quantity = watch("quantity");
   const amount = watch("amount");
 
   useEffect(() => {
@@ -59,6 +62,7 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
     if (invoice && ridas.length > 0) {
       setValue("customer", invoice.customer);
       setValue("reseller", invoice.reseller);
+      setValue("quantity", invoice.quantity ?? 1);
       setValue("amount", invoice.amount);
       setValue("profit", invoice.profit);
       setValue("address", invoice.address ?? "");
@@ -75,14 +79,16 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
   }, [invoice, ridas, setValue]);
 
   const selectedRida = ridaId ? (ridas.find((r) => r._id === ridaId) || null) : null;
-  const costPrice = selectedRida ? selectedRida.price - selectedRida.profit : null;
+  const unitCostPrice = selectedRida ? selectedRida.price - selectedRida.profit : null;
 
   useEffect(() => {
-    if (costPrice != null && amount != null && !isEdit) {
-      const p = Number(amount) - costPrice;
+    if (unitCostPrice != null && amount != null && !isEdit) {
+      const qty = Number(quantity) || 1;
+      const totalCost = unitCostPrice * qty;
+      const p = Number(amount) - totalCost;
       if (!Number.isNaN(p)) setValue("profit", p);
     }
-  }, [amount, costPrice, isEdit, setValue]);
+  }, [amount, unitCostPrice, quantity, isEdit, setValue]);
 
   const handleClose = useCallback(() => {
     onClose();
@@ -105,8 +111,9 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
   function handleSelectRida(r: RidaItem) {
     setValue("ridaId", r._id);
     setValue("ridaDisplay", r.ridaName);
-    setValue("amount", r.price);
-    setValue("profit", r.profit);
+    const qty = Number(watch("quantity")) || 1;
+    setValue("amount", r.price * qty);
+    setValue("profit", r.profit * qty);
     clearErrors("ridaId");
     setRidaSearch("");
     setRidaDropdownOpen(false);
@@ -121,6 +128,7 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
     try {
       const body = {
         ridaId: data.ridaId,
+        quantity: Number(data.quantity) || 1,
         customer: data.customer.trim(),
         reseller: data.reseller.trim(),
         amount: Number(data.amount),
@@ -330,6 +338,42 @@ export function InvoiceForm({ invoice, onClose, onSuccess }: Props) {
               {errors.ridaId && (
                 <p className="mt-1 text-sm text-red-600" role="alert">
                   {errors.ridaId.message}
+                </p>
+              )}
+            </div>
+
+            {/* ── Quantity ──────────────────────────────────── */}
+            <div>
+              <label
+                htmlFor="invoice-quantity"
+                className="mb-1.5 block text-sm font-medium text-zinc-700"
+              >
+                Quantity *
+              </label>
+              <input
+                id="invoice-quantity"
+                type="number"
+                min={1}
+                step={1}
+                className={inputClass}
+                required
+                {...register("quantity", {
+                  required: "Quantity is required",
+                  valueAsNumber: true,
+                  min: { value: 1, message: "Quantity must be at least 1" },
+                  validate: (v) => Number.isInteger(Number(v)) || "Quantity must be an integer",
+                  onChange: (e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val) && val >= 1 && selectedRida) {
+                      setValue("amount", selectedRida.price * val);
+                      setValue("profit", selectedRida.profit * val);
+                    }
+                  },
+                })}
+              />
+              {errors.quantity && (
+                <p className="mt-1 text-sm text-red-600" role="alert">
+                  {errors.quantity.message}
                 </p>
               )}
             </div>

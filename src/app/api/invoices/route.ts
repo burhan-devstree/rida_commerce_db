@@ -61,10 +61,11 @@ async function getHandler(
       Invoice.countDocuments(filter),
     ]);
     const invoices = rawInvoices.map((d) => {
-      const row = d as { profit?: number; ridaId?: unknown };
+      const row = d as { profit?: number; quantity?: number; ridaId?: unknown };
       return {
         ...d,
         profit: row.profit ?? 0,
+        quantity: row.quantity ?? 1,
       };
     });
 
@@ -95,7 +96,7 @@ async function postHandler(
         { status: 400 }
       );
     }
-    const { ridaId, customer, reseller, amount, profit, address } = parsed.data;
+    const { ridaId, quantity, customer, reseller, amount, profit, address } = parsed.data;
 
     await connectDB();
 
@@ -104,6 +105,7 @@ async function postHandler(
     const createPayload = {
       invoiceNumber,
       ridaId: new mongoose.Types.ObjectId(ridaId),
+      quantity: quantity ?? 1,
       customer,
       reseller,
       amount,

@@ -7,6 +7,7 @@ export const loginSchema = z.object({
 
 export const createInvoiceSchema = z.object({
   ridaId: z.string().min(1, "Rida is required"),
+  quantity: z.number().int("Quantity must be an integer").min(1, "Quantity must be at least 1").default(1),
   customer: z.string().min(1, "Customer is required"),
   reseller: z.string().min(1, "Reseller is required"),
   amount: z.number().min(0),
@@ -16,6 +17,7 @@ export const createInvoiceSchema = z.object({
 
 export const updateInvoiceSchema = z.object({
   ridaId: z.string().min(1).optional(),
+  quantity: z.number().int("Quantity must be an integer").min(1, "Quantity must be at least 1").optional(),
   customer: z.string().min(1).optional(),
   reseller: z.string().min(1).optional(),
   amount: z.number().min(0).optional(),

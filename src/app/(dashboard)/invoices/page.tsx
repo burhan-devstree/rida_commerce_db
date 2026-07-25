@@ -207,8 +207,8 @@ export default function InvoicesPage() {
                       .filter((r) =>
                         ridaFilterSearch.trim()
                           ? r.ridaName
-                              .toLowerCase()
-                              .includes(ridaFilterSearch.trim().toLowerCase())
+                            .toLowerCase()
+                            .includes(ridaFilterSearch.trim().toLowerCase())
                           : true
                       )
                       .map((r) => (
@@ -285,6 +285,7 @@ export default function InvoicesPage() {
                   <tr className="border-b border-zinc-200 bg-sky-100">
                     <th className="p-3 font-semibold text-zinc-900">Invoice #</th>
                     <th className="p-3 font-semibold text-zinc-900">Rida</th>
+                    <th className="p-3 font-semibold text-zinc-900">QTY</th>
                     <th className="p-3 font-semibold text-zinc-900">Customer</th>
                     <th className="p-3 font-semibold text-zinc-900">Reseller</th>
                     <th className="p-3 font-semibold text-zinc-900">Amount</th>
@@ -296,69 +297,70 @@ export default function InvoicesPage() {
                 <tbody>
                   {data.invoices.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center text-zinc-600">
+                      <td colSpan={8} className="p-8 text-center text-zinc-600">
                         No invoices found. Try adjusting your filters or create a new invoice.
                       </td>
                     </tr>
                   ) : (
-                  data.invoices.map((inv) => (
-                    <tr key={inv._id} className="border-b border-zinc-100 hover:bg-zinc-50/50">
-                      <td className="p-3 font-mono text-zinc-900">{inv.invoiceNumber}</td>
-                      <td className="p-3 text-zinc-700">{typeof inv.ridaId === "object" && inv.ridaId !== null ? inv.ridaId.ridaName : "—"}</td>
-                      <td className="p-3 text-zinc-700">{inv.customer}</td>
-                      <td className="p-3 text-zinc-700">{inv.reseller}</td>
-                      <td className="p-3 font-medium text-zinc-900">{formatMoney(inv.amount)}</td>
-                      <td className="p-3 text-zinc-700">{formatMoney(inv.profit)}</td>
-                      <td className="p-3 text-zinc-700">
-                        {inv.isAddressPrinted ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">
-                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                            Printed
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
-                            <span className="h-2 w-2 rounded-full bg-red-500" />
-                            Not printed
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setViewing(inv)}
-                            title="View full details"
-                            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-zinc-600 hover:bg-blue-50 hover:text-blue-600"
-                            aria-label="View full details"
-                          >
-                            <EyeIcon className="h-5 w-5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditing(inv)}
-                            title="Edit invoice"
-                            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-blue-600"
-                            aria-label="Edit invoice"
-                          >
-                            <PencilIcon className="h-5 w-5" />
-                          </button>
-                          <button
-                            type="button"
-                            title="Delete invoice"
-                            onClick={() => {
-                              if (confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) {
-                                deleteInvoice.mutate(inv._id);
-                              }
-                            }}
-                            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-zinc-600 hover:bg-red-50 hover:text-red-600"
-                            aria-label="Delete invoice"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )))}
+                    data.invoices.map((inv) => (
+                      <tr key={inv._id} className="border-b border-zinc-100 hover:bg-zinc-50/50">
+                        <td className="p-3 font-mono text-zinc-900">{inv.invoiceNumber}</td>
+                        <td className="p-3 text-zinc-700">{typeof inv.ridaId === "object" && inv.ridaId !== null ? inv.ridaId.ridaName : "—"}</td>
+                        <td className="p-3 text-zinc-700 font-medium">{inv.quantity ?? 1}</td>
+                        <td className="p-3 text-zinc-700">{inv.customer}</td>
+                        <td className="p-3 text-zinc-700">{inv.reseller}</td>
+                        <td className="p-3 font-medium text-zinc-900">{formatMoney(inv.amount)}</td>
+                        <td className="p-3 text-zinc-700">{formatMoney(inv.profit)}</td>
+                        <td className="p-3 text-zinc-700">
+                          {inv.isAddressPrinted ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                              Printed
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                              <span className="h-2 w-2 rounded-full bg-red-500" />
+                              Not printed
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3">
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setViewing(inv)}
+                              title="View full details"
+                              className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-zinc-600 hover:bg-blue-50 hover:text-blue-600"
+                              aria-label="View full details"
+                            >
+                              <EyeIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditing(inv)}
+                              title="Edit invoice"
+                              className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-blue-600"
+                              aria-label="Edit invoice"
+                            >
+                              <PencilIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                              type="button"
+                              title="Delete invoice"
+                              onClick={() => {
+                                if (confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) {
+                                  deleteInvoice.mutate(inv._id);
+                                }
+                              }}
+                              className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-zinc-600 hover:bg-red-50 hover:text-red-600"
+                              aria-label="Delete invoice"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )))}
                 </tbody>
               </table>
             </div>
@@ -370,87 +372,87 @@ export default function InvoicesPage() {
                   No invoices found. Try adjusting your filters or create a new invoice.
                 </div>
               ) : (
-              data.invoices.map((inv) => (
-                <div
-                  key={inv._id}
-                  className="border-b border-zinc-100 p-4 last:border-b-0"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-zinc-900">{inv.customer}</p>
-                      <p className="text-sm text-zinc-600">
-                        Rida: {typeof inv.ridaId === "object" && inv.ridaId !== null ? inv.ridaId.ridaName : "—"}
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-zinc-900">
-                        {formatMoney(inv.amount)}
-                      </p>
-                      <p className="mt-0.5 text-xs text-zinc-600">
-                        Profit: {formatMoney(inv.profit)}
-                      </p>
-                      <p className="mt-0.5 text-xs text-zinc-600">
-                        Address:{" "}
-                        {inv.isAddressPrinted ? "Printed" : "Not printed"}
-                      </p>
-                    </div>
-                    <div className="relative flex items-start">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setMobileMenuFor((prev) => (prev === inv._id ? null : inv._id))
-                        }
-                        title="Actions"
-                        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-zinc-600 hover:bg-zinc-100"
-                        aria-label="Invoice actions"
-                      >
-                        <MenuIcon className="h-5 w-5" />
-                      </button>
-                      {mobileMenuFor === inv._id && (
-                        <div className="absolute right-0 top-10 z-10 min-w-[9rem] rounded-lg border border-zinc-200 bg-white py-1 text-sm shadow-lg">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setViewing(inv);
-                              setMobileMenuFor(null);
-                            }}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-zinc-700 hover:bg-blue-50"
-                          >
-                            <EyeIcon className="h-4 w-4" />
-                            <span>View</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditing(inv);
-                              setMobileMenuFor(null);
-                            }}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-zinc-700 hover:bg-zinc-50"
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                            <span>Edit</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setMobileMenuFor(null);
-                              if (
-                                confirm(
-                                  "Are you sure you want to delete this invoice? This action cannot be undone."
-                                )
-                              ) {
-                                deleteInvoice.mutate(inv._id);
-                              }
-                            }}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-red-600 hover:bg-red-50"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                            <span>Delete</span>
-                          </button>
-                        </div>
-                      )}
+                data.invoices.map((inv) => (
+                  <div
+                    key={inv._id}
+                    className="border-b border-zinc-100 p-4 last:border-b-0"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-zinc-900">{inv.customer}</p>
+                        <p className="text-sm text-zinc-600">
+                          Rida: {typeof inv.ridaId === "object" && inv.ridaId !== null ? inv.ridaId.ridaName : "—"} · Qty: {inv.quantity ?? 1}
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-zinc-900">
+                          {formatMoney(inv.amount)}
+                        </p>
+                        <p className="mt-0.5 text-xs text-zinc-600">
+                          Profit: {formatMoney(inv.profit)}
+                        </p>
+                        <p className="mt-0.5 text-xs text-zinc-600">
+                          Address:{" "}
+                          {inv.isAddressPrinted ? "Printed" : "Not printed"}
+                        </p>
+                      </div>
+                      <div className="relative flex items-start">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setMobileMenuFor((prev) => (prev === inv._id ? null : inv._id))
+                          }
+                          title="Actions"
+                          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-zinc-600 hover:bg-zinc-100"
+                          aria-label="Invoice actions"
+                        >
+                          <MenuIcon className="h-5 w-5" />
+                        </button>
+                        {mobileMenuFor === inv._id && (
+                          <div className="absolute right-0 top-10 z-10 min-w-[9rem] rounded-lg border border-zinc-200 bg-white py-1 text-sm shadow-lg">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setViewing(inv);
+                                setMobileMenuFor(null);
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-zinc-700 hover:bg-blue-50"
+                            >
+                              <EyeIcon className="h-4 w-4" />
+                              <span>View</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditing(inv);
+                                setMobileMenuFor(null);
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-zinc-700 hover:bg-zinc-50"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMobileMenuFor(null);
+                                if (
+                                  confirm(
+                                    "Are you sure you want to delete this invoice? This action cannot be undone."
+                                  )
+                                ) {
+                                  deleteInvoice.mutate(inv._id);
+                                }
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )))}
+                )))}
             </div>
 
             <Pagination
@@ -516,6 +518,10 @@ export default function InvoicesPage() {
                 <div>
                   <dt className="font-medium text-zinc-500">Rida</dt>
                   <dd className="mt-0.5 text-zinc-900">{typeof viewing.ridaId === "object" && viewing.ridaId !== null ? viewing.ridaId.ridaName : "—"}</dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-zinc-500">Quantity</dt>
+                  <dd className="mt-0.5 text-zinc-900 font-medium">{viewing.quantity ?? 1}</dd>
                 </div>
                 <div>
                   <dt className="font-medium text-zinc-500">Customer</dt>

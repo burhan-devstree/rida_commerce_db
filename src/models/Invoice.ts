@@ -4,6 +4,7 @@ export interface IInvoice {
   _id: mongoose.Types.ObjectId;
   invoiceNumber: string;
   ridaId: mongoose.Types.ObjectId;
+  quantity: number;
   customer: string;
   reseller: string;
   amount: number;
@@ -19,6 +20,7 @@ const InvoiceSchema = new Schema<IInvoice>(
   {
     invoiceNumber: { type: String, required: true, unique: true },
     ridaId: { type: Schema.Types.ObjectId, ref: "Rida", required: true },
+    quantity: { type: Number, required: true, default: 1, min: 1 },
     customer: { type: String, required: true },
     reseller: { type: String, required: true },
     amount: { type: Number, required: true },

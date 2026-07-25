@@ -23,10 +23,11 @@ async function getHandler(
     if (!doc) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
-    const row = doc as { profit?: number };
+    const row = doc as { profit?: number; quantity?: number };
     const invoice = {
       ...doc,
       profit: row.profit ?? 0,
+      quantity: row.quantity ?? 1,
     };
     return NextResponse.json(invoice);
   } catch (err) {
@@ -71,6 +72,7 @@ async function putHandler(
         invoice.ridaId = new mongoose.Types.ObjectId(updates.ridaId);
       }
     }
+    if (updates.quantity != null) invoice.quantity = updates.quantity;
     if (updates.customer != null) invoice.customer = updates.customer;
     if (updates.reseller != null) invoice.reseller = updates.reseller;
     if (updates.amount != null) invoice.amount = updates.amount;
