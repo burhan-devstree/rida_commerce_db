@@ -9,7 +9,7 @@ import { generateInvoiceNumber } from "@/lib/invoiceNumber";
 async function getHandler(
   req: NextRequest,
   _context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     await connectDB();
@@ -24,8 +24,9 @@ async function getHandler(
     }
     const { page, limit, search, searchField, dateFrom, dateTo, ridaId } = parsed.data;
 
-
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = {
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    };
     if (ridaId && mongoose.Types.ObjectId.isValid(ridaId)) {
       filter.ridaId = new mongoose.Types.ObjectId(ridaId);
     }
@@ -85,7 +86,7 @@ async function getHandler(
 async function postHandler(
   req: NextRequest,
   _context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const body = await req.json();
@@ -100,9 +101,10 @@ async function postHandler(
 
     await connectDB();
 
-    const invoiceNumber = await generateInvoiceNumber();
+    const invoiceNumber = await generateInvoiceNumber(payload.userId);
 
     const createPayload = {
+      userId: new mongoose.Types.ObjectId(payload.userId),
       invoiceNumber,
       ridaId: new mongoose.Types.ObjectId(ridaId),
       quantity: quantity ?? 1,
@@ -129,3 +131,4 @@ async function postHandler(
 
 export const GET = requireAuth(getHandler);
 export const POST = requireAuth(postHandler);
+

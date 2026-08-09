@@ -9,7 +9,7 @@ import { put, del } from "@vercel/blob";
 async function getHandler(
   _req: NextRequest,
   context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const params = await context.params!;
@@ -18,7 +18,10 @@ async function getHandler(
       return NextResponse.json({ error: "Invalid Rida ID" }, { status: 400 });
     }
     await connectDB();
-    const rida = await Rida.findById(id).lean();
+    const rida = await Rida.findOne({
+      _id: id,
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    }).lean();
     if (!rida) {
       return NextResponse.json({ error: "Rida not found" }, { status: 404 });
     }
@@ -35,7 +38,7 @@ async function getHandler(
 async function putHandler(
   req: NextRequest,
   context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const params = await context.params!;
@@ -55,7 +58,10 @@ async function putHandler(
     const ridaImageField = formData.get("ridaImage") as string | null;
 
     await connectDB();
-    const rida = await Rida.findById(id);
+    const rida = await Rida.findOne({
+      _id: id,
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    });
     if (!rida) {
       return NextResponse.json({ error: "Rida not found" }, { status: 404 });
     }
@@ -123,7 +129,7 @@ async function putHandler(
 async function deleteHandler(
   _req: NextRequest,
   context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const params = await context.params!;
@@ -132,14 +138,20 @@ async function deleteHandler(
       return NextResponse.json({ error: "Invalid Rida ID" }, { status: 400 });
     }
     await connectDB();
-    const isReferenced = await Invoice.exists({ ridaId: id });
+    const isReferenced = await Invoice.exists({
+      ridaId: id,
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    });
     if (isReferenced) {
       return NextResponse.json(
         { error: "Rida is in use by one or more invoices and cannot be deleted." },
         { status: 400 }
       );
     }
-    const deleted = await Rida.findByIdAndDelete(id);
+    const deleted = await Rida.findOneAndDelete({
+      _id: id,
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    });
     if (!deleted) {
       return NextResponse.json({ error: "Rida not found" }, { status: 404 });
     }
@@ -163,3 +175,4 @@ async function deleteHandler(
 export const GET = requireAuth(getHandler);
 export const PUT = requireAuth(putHandler);
 export const DELETE = requireAuth(deleteHandler);
+

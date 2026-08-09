@@ -1,17 +1,25 @@
 import { Invoice } from "@/models/Invoice";
+import mongoose from "mongoose";
 
 const PREFIX_LEN = 9; // YYYYMMDD = 8, dash = 1
 
 /**
  * Format: YYYYMMDD-XX (e.g. 20260319-01).
- * Counter resets each day. Uniqueness ensured by querying today's count.
+ * Counter resets each day. Uniqueness ensured by querying today's count per user.
  */
-export async function generateInvoiceNumber(): Promise<string> {
+export async function generateInvoiceNumber(userId?: string | mongoose.Types.ObjectId): Promise<string> {
   const today = new Date();
   const prefix = formatDatePrefix(today);
 
+  const query: Record<string, unknown> = {
+    invoiceNumber: new RegExp(`^${prefix}-\\d+$`),
+  };
+  if (userId) {
+    query.userId = typeof userId === "string" ? new mongoose.Types.ObjectId(userId) : userId;
+  }
+
   const lastToday = await Invoice.findOne(
-    { invoiceNumber: new RegExp(`^${prefix}-\\d+$`) },
+    query,
     { invoiceNumber: 1 },
     { sort: { invoiceNumber: -1 } }
   ).lean();
@@ -32,3 +40,4 @@ function formatDatePrefix(d: Date): string {
   const day = d.getDate().toString().padStart(2, "0");
   return `${y}${m}${day}`;
 }
+

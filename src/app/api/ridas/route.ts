@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import { Rida } from "@/models/Rida";
 import { requireAuth } from "@/middleware/auth";
@@ -8,7 +9,7 @@ import { put } from "@vercel/blob";
 async function getHandler(
   req: NextRequest,
   _context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const { searchParams } = new URL(req.url);
@@ -17,7 +18,9 @@ async function getHandler(
 
     await connectDB();
 
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = {
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    };
     if (search) {
       filter.ridaName = new RegExp(search, "i");
     }
@@ -43,7 +46,7 @@ async function getHandler(
       });
     }
 
-    const list = await Rida.find(filter).sort({ ridaName: 1 }).lean();
+    const list = await Rida.find(filter).sort({ createdAt: -1 }).lean();
     return NextResponse.json(list);
   } catch (err) {
     console.error("GET /api/ridas:", err);
@@ -57,7 +60,7 @@ async function getHandler(
 async function postHandler(
   req: NextRequest,
   _context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     // Accept multipart/form-data to support image upload
@@ -83,8 +86,9 @@ async function postHandler(
 
     await connectDB();
 
-    // Duplicate name check (case-insensitive)
+    // Duplicate name check scoped to current user
     const existing = await Rida.findOne({
+      userId: new mongoose.Types.ObjectId(payload.userId),
       ridaName: {
         $regex: new RegExp(
           `^${ridaName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
@@ -112,6 +116,7 @@ async function postHandler(
     }
 
     const doc = await Rida.create({
+      userId: new mongoose.Types.ObjectId(payload.userId),
       ridaName: parsed.data.ridaName,
       price: parsed.data.price,
       profit: parsed.data.profit,
@@ -130,3 +135,4 @@ async function postHandler(
 
 export const GET = requireAuth(getHandler);
 export const POST = requireAuth(postHandler);
+

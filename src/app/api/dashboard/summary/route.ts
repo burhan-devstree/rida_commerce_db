@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import { Invoice } from "@/models/Invoice";
 import { Expense } from "@/models/Expense";
@@ -9,7 +10,7 @@ import { dashboardSummaryQuerySchema } from "@/lib/validators";
 async function getHandler(
   req: NextRequest,
   _context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const { searchParams } = new URL(req.url);
@@ -19,7 +20,9 @@ async function getHandler(
 
     await connectDB();
 
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = {
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    };
     if (startDate || endDate) {
       filter.createdAt = {};
       if (startDate) {
@@ -58,3 +61,4 @@ async function getHandler(
 }
 
 export const GET = requireAuth(getHandler);
+

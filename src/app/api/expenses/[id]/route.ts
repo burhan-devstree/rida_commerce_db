@@ -8,7 +8,7 @@ import { updateExpenseSchema } from "@/lib/validators";
 async function getHandler(
   _req: NextRequest,
   context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const params = await context.params!;
@@ -17,7 +17,10 @@ async function getHandler(
       return NextResponse.json({ error: "Invalid Expense ID" }, { status: 400 });
     }
     await connectDB();
-    const doc = await Expense.findById(id).lean();
+    const doc = await Expense.findOne({
+      _id: id,
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    }).lean();
     if (!doc) {
       return NextResponse.json({ error: "Expense not found" }, { status: 404 });
     }
@@ -34,7 +37,7 @@ async function getHandler(
 async function putHandler(
   req: NextRequest,
   context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const params = await context.params!;
@@ -53,7 +56,10 @@ async function putHandler(
     }
 
     await connectDB();
-    const expense = await Expense.findById(id);
+    const expense = await Expense.findOne({
+      _id: id,
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    });
     if (!expense) {
       return NextResponse.json({ error: "Expense not found" }, { status: 404 });
     }
@@ -79,7 +85,7 @@ async function putHandler(
 async function deleteHandler(
   _req: NextRequest,
   context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const params = await context.params!;
@@ -88,7 +94,10 @@ async function deleteHandler(
       return NextResponse.json({ error: "Invalid Expense ID" }, { status: 400 });
     }
     await connectDB();
-    const deleted = await Expense.findByIdAndDelete(id);
+    const deleted = await Expense.findOneAndDelete({
+      _id: id,
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    });
     if (!deleted) {
       return NextResponse.json({ error: "Expense not found" }, { status: 404 });
     }
@@ -105,3 +114,4 @@ async function deleteHandler(
 export const GET = requireAuth(getHandler);
 export const PUT = requireAuth(putHandler);
 export const DELETE = requireAuth(deleteHandler);
+

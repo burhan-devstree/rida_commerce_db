@@ -2,6 +2,7 @@ import mongoose, { Schema, Model } from "mongoose";
 
 export interface IRida {
   _id: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   ridaName: string;
   price: number;
   profit: number;
@@ -12,7 +13,8 @@ export interface IRida {
 
 const RidaSchema = new Schema<IRida>(
   {
-    ridaName: { type: String, required: true, unique: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    ridaName: { type: String, required: true },
     price: { type: Number, required: true },
     profit: { type: Number, required: true },
     ridaImage: { type: String },
@@ -20,5 +22,8 @@ const RidaSchema = new Schema<IRida>(
   { timestamps: true }
 );
 
+RidaSchema.index({ userId: 1, ridaName: 1 }, { unique: true });
+
 export const Rida: Model<IRida> =
   mongoose.models.Rida ?? mongoose.model<IRida>("Rida", RidaSchema);
+

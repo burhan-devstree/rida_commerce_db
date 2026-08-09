@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import { Expense } from "@/models/Expense";
 import { requireAuth } from "@/middleware/auth";
@@ -7,7 +8,7 @@ import { createExpenseSchema, queryExpensesSchema } from "@/lib/validators";
 async function getHandler(
   req: NextRequest,
   _context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const { searchParams } = new URL(req.url);
@@ -23,7 +24,9 @@ async function getHandler(
 
     await connectDB();
 
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = {
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    };
     if (search?.trim()) {
       filter.expenseName = new RegExp(search.trim(), "i");
     }
@@ -60,7 +63,7 @@ async function getHandler(
 async function postHandler(
   req: NextRequest,
   _context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const body = await req.json();
@@ -74,6 +77,7 @@ async function postHandler(
 
     await connectDB();
     const doc = await Expense.create({
+      userId: new mongoose.Types.ObjectId(payload.userId),
       expenseName: parsed.data.expenseName.trim(),
       amount: parsed.data.amount,
     });
@@ -90,3 +94,4 @@ async function postHandler(
 
 export const GET = requireAuth(getHandler);
 export const POST = requireAuth(postHandler);
+

@@ -11,7 +11,7 @@ type MarkPrintedBody = {
 async function postHandler(
   req: NextRequest,
   _context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string },
+  payload: { userId: string; email: string },
 ) {
   try {
     let body: MarkPrintedBody;
@@ -42,7 +42,7 @@ async function postHandler(
     await connectDB();
     const now = new Date();
     const result = await Invoice.updateMany(
-      { _id: { $in: validIds } },
+      { _id: { $in: validIds }, userId: new mongoose.Types.ObjectId(payload.userId) },
       { $set: { isAddressPrinted: true, addressPrintedAt: now } },
     );
 

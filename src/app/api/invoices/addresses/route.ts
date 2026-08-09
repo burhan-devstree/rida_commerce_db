@@ -14,7 +14,7 @@ function parseDate(value: string | null): Date | null {
 async function getHandler(
   req: NextRequest,
   _context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string },
+  payload: { userId: string; email: string },
 ) {
   try {
     const { searchParams } = new URL(req.url);
@@ -41,6 +41,7 @@ async function getHandler(
     await connectDB();
 
     const filter: Record<string, unknown> = {
+      userId: new mongoose.Types.ObjectId(payload.userId),
       address: { $exists: true, $ne: "" },
     };
 

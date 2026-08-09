@@ -8,7 +8,7 @@ import { updateInvoiceSchema } from "@/lib/validators";
 async function getHandler(
   _req: NextRequest,
   context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const params = await context.params!;
@@ -17,7 +17,10 @@ async function getHandler(
       return NextResponse.json({ error: "Invalid invoice ID" }, { status: 400 });
     }
     await connectDB();
-    const doc = await Invoice.findById(id)
+    const doc = await Invoice.findOne({
+      _id: id,
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    })
       .populate("ridaId", "ridaName price profit")
       .lean();
     if (!doc) {
@@ -42,7 +45,7 @@ async function getHandler(
 async function putHandler(
   req: NextRequest,
   context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const params = await context.params!;
@@ -61,7 +64,10 @@ async function putHandler(
     }
 
     await connectDB();
-    const invoice = await Invoice.findById(id);
+    const invoice = await Invoice.findOne({
+      _id: id,
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    });
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
@@ -96,7 +102,7 @@ async function putHandler(
 async function deleteHandler(
   _req: NextRequest,
   context: { params?: Promise<Record<string, string>> },
-  _payload: { userId: string; email: string }
+  payload: { userId: string; email: string }
 ) {
   try {
     const params = await context.params!;
@@ -105,7 +111,10 @@ async function deleteHandler(
       return NextResponse.json({ error: "Invalid invoice ID" }, { status: 400 });
     }
     await connectDB();
-    const deleted = await Invoice.findByIdAndDelete(id);
+    const deleted = await Invoice.findOneAndDelete({
+      _id: id,
+      userId: new mongoose.Types.ObjectId(payload.userId),
+    });
     if (!deleted) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
@@ -122,3 +131,4 @@ async function deleteHandler(
 export const GET = requireAuth(getHandler);
 export const PUT = requireAuth(putHandler);
 export const DELETE = requireAuth(deleteHandler);
+
